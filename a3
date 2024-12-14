@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UOB Student Nationality Data</title>
+    <link rel="stylesheet" href="https://unpkg.com/pico.css">
+    <style>
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>University of Bahrain Student Nationality Data</h1>
+    <table id="data-table">
+        <thead>
+            <tr>
+                <th>Year</th>
+                <th>Semester</th>
+                <th>Nationality</th>
+                <th>College</th>
+                <th>Number of Students</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be populated here -->
+        </tbody>
+    </table>
+
+    <script>
+        const endpoint = 'https://data.gov.bh/api/explore/v2.1/catalog/datasets/01-statistics-of-students-nationalities_updated/records?where=colleges%20like%20%22IT%22%20AND%20the_programs%20like%20%22bachelor%22&limit=100';
+
+        fetch(endpoint)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const records = data.results; // Accessing results
+                const tableBody = document.getElementById('data-table').querySelector('tbody');
+                const totals = {};
+
+                // First pass: Create rows and calculate totals
+                records.forEach(record => {
+                    const row = document.createElement('tr');
+                    const year = record.year || 'N/A';
+                    const semester = record.semester || 'N/A';
+                    const nationality = record.nationality || 'N/A';
+                    const college = record.colleges || 'N/A';
+                    const numberOfStudents = record.number_of_students || 0;
+
+                    // Update totals
+                    if (!totals[nationality]) {
+                        totals[nationality] = 0;
+                    }
+                    totals[nationality] += numberOfStudents;
+
+                    row.innerHTML = `
+                        <td>${year}</td>
+                        <td>${semester}</td>
+                        <td>${nationality}</td>
+                        <td>${college}</td>
+                        <td>${numberOfStudents}</td>
+                        <td></td> <!-- Placeholder for Total -->
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                // Second pass: Fill in the totals
+                const rows = tableBody.querySelectorAll('tr');
+                rows.forEach(row => {
+                    const nationality = row.cells[2].textContent; // Get nationality from the row
+                    const total = totals[nationality];
+                    if (total) {
+                        row.cells[5].textContent = total; // Set total in the last column
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+            });
+    </script>
+
+</body>
+</html>
